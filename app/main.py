@@ -1,16 +1,24 @@
 # -*- coding: utf-8 -*-
 import re
-
 import requests
-from flask import Flask, Response, redirect, request
 from requests.exceptions import (
     ChunkedEncodingError,
-    ContentDecodingError, ConnectionError, StreamConsumedError)
+    ContentDecodingError,
+    ConnectionError,
+    StreamConsumedError
+)
 from requests.utils import (
-    stream_decode_response_unicode, iter_slices, CaseInsensitiveDict)
+    stream_decode_response_unicode,
+    iter_slices,
+    CaseInsensitiveDict
+)
 from urllib3.exceptions import (
-    DecodeError, ReadTimeoutError, ProtocolError)
+    DecodeError,
+    ReadTimeoutError,
+    ProtocolError
+)
 from urllib.parse import quote
+from flask import Flask, Response, redirect, request
 
 # config
 # 分支文件使用jsDelivr镜像的开关，0为关闭，默认关闭
@@ -35,11 +43,11 @@ pass_list = '''
 HOST = '127.0.0.1'  # 监听地址，建议监听本地然后由web服务器反代
 PORT = 80  # 监听端口
 ASSET_URL = 'https://hunshcn.github.io/gh-proxy'  # 主页
+# ASSET_URL = 'https://www.baidu.com/'  # 主页
 
 white_list = [tuple([x.replace(' ', '') for x in i.split('/')]) for i in white_list.split('\n') if i]
 black_list = [tuple([x.replace(' ', '') for x in i.split('/')]) for i in black_list.split('\n') if i]
 pass_list = [tuple([x.replace(' ', '') for x in i.split('/')]) for i in pass_list.split('\n') if i]
-app = Flask(__name__)
 CHUNK_SIZE = 1024 * 10
 index_html = requests.get(ASSET_URL, timeout=10).text
 icon_r = requests.get(ASSET_URL + '/favicon.ico', timeout=10).content
@@ -50,6 +58,8 @@ exp4 = re.compile(r'^(?:https?://)?raw\.(?:githubusercontent|github)\.com/(?P<au
 exp5 = re.compile(r'^(?:https?://)?gist\.(?:githubusercontent|github)\.com/(?P<author>.+?)/.+?/.+$')
 
 requests.sessions.default_headers = lambda: CaseInsensitiveDict()
+
+app = Flask(__name__)
 
 
 @app.route('/')
@@ -168,7 +178,8 @@ def proxy(u, allow_redirects=False):
         url = u + request.url.replace(request.base_url, '', 1)
         if url.startswith('https:/') and not url.startswith('https://'):
             url = 'https://' + url[7:]
-        r = requests.request(method=request.method, url=url, data=request.data, headers=r_headers, stream=True, allow_redirects=allow_redirects)
+        r = requests.request(method=request.method, url=url, data=request.data, headers=r_headers, stream=True,
+                             allow_redirects=allow_redirects)
         headers = dict(r.headers)
 
         if 'Content-length' in r.headers and int(r.headers['Content-length']) > size_limit:
@@ -189,6 +200,7 @@ def proxy(u, allow_redirects=False):
     except Exception as e:
         headers['content-type'] = 'text/html; charset=UTF-8'
         return Response('server error ' + str(e), status=500, headers=headers)
+
 
 app.debug = True
 if __name__ == '__main__':
